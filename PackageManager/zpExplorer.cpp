@@ -790,8 +790,8 @@ bool ZpExplorer::isDirectoryExistInternal(const zp::String & dirPath)
 	HANDLE findFile = ::FindFirstFile(dirPath.c_str(), &fd);
 	if (findFile == INVALID_HANDLE_VALUE)
 	{
-		if (!createDirectory(dirPath))
-			return false;
+ 		if (!createDirectory(dirPath))
+ 			return false;
 		// 			if (::SHCreateDirectoryEx(NULL, externalPath.c_str(), NULL) != ERROR_SUCCESS)
 		// 			{
 		// 				return false;
@@ -806,7 +806,19 @@ bool ZpExplorer::isDirectoryExistInternal(const zp::String & dirPath)
 	struct stat st;
 	if (stat(dirPath.c_str(), &st) == 0)
 	{
-		return S_ISDIR(st.st_mode);
+		if (!S_ISDIR(st.st_mode))
+		{
+			if (!createDirectory(dirPath))
+				return false;
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return true;
+		}
 	}
 	return false;
 #endif
