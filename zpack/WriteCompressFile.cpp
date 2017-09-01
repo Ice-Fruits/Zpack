@@ -34,7 +34,7 @@ u32 writeCompressFile(FILE* dstFile, u64 offset, FILE* srcFile, u32 srcFileSize,
 		}
 		fread(&chunkData[0], curChunkSize, 1, srcFile);
 
-		u32 dstSize = chunkSize;
+		unsigned long dstSize = chunkSize;
 		int ret = compress(dstBuffer, &dstSize, &chunkData[0], curChunkSize);
 
 		if (ret != Z_OK	|| dstSize >= curChunkSize)

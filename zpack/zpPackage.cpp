@@ -602,7 +602,9 @@ bool Package::readHeader()
 	{
 		return false;
 	}
+
 	fseeko64(m_stream, 0, SEEK_SET);
+	size_t size = sizeof(PackageHeader);
 	fread(&m_header, sizeof(PackageHeader), 1, m_stream);
 	if (m_header.sign != PACKAGE_FILE_SIGN
 		|| m_header.headerSize != sizeof(PackageHeader)
@@ -648,7 +650,7 @@ bool Package::readFileEntries()
 	{
 		vector<u8> srcBuffer(m_header.allFileEntrySize);
 		fread(&srcBuffer[0], m_header.allFileEntrySize, 1, m_stream);
-		u32 dstBufferSize = m_header.fileCount * m_header.fileEntrySize;
+		unsigned long dstBufferSize = m_header.fileCount * m_header.fileEntrySize;
 		int ret = uncompress(&m_fileEntries[0], &dstBufferSize, &srcBuffer[0], m_header.allFileEntrySize);
 		if (ret != Z_OK || dstBufferSize != m_header.fileCount * m_header.fileEntrySize)
 		{
@@ -680,16 +682,24 @@ bool Package::readFilenames()
 	{
 		vector<u8> tempBuffer(m_header.allFilenameSize);
 		fread(&tempBuffer[0], m_header.allFilenameSize, 1, m_stream);
-		u32 originSize = m_header.originFilenamesSize;
+		unsigned long originSize = m_header.originFilenamesSize;
 		int ret = uncompress(&dstBuffer[0], &originSize, &tempBuffer[0], m_header.allFilenameSize);
 		if (ret != Z_OK || originSize != m_header.originFilenamesSize)
 		{
 			return false;
 		}
 	}
-	
-	String names;
+
+    String names;
 	names.assign((Char*)&dstBuffer[0], m_header.originFilenamesSize / sizeof(Char));
+#ifndef WIN32
+    while(true)   {
+        string::size_type   pos(0);
+        if((pos=names.find('\0'))!=string::npos)
+            names.replace(pos,1,"");
+        else   break;
+    }
+#endif
 	
 	u32 fileCount = getFileCount();
 	m_filenames.resize(fileCount);
@@ -749,8 +759,8 @@ void Package::writeTables(bool avoidOverwrite)
 	}
 
 	//compress file entries
-	u32 srcEntrySize = m_fileEntries.size();
-	u32 dstEntrySize = srcEntrySize;
+	unsigned long srcEntrySize = m_fileEntries.size();
+	unsigned long dstEntrySize = srcEntrySize;
 
 	vector<u8> dstEntryBuffer(dstEntrySize);
 	int ret = compress(&dstEntryBuffer[0], &dstEntrySize, &m_fileEntries[0], srcEntrySize);
@@ -766,8 +776,8 @@ void Package::writeTables(bool avoidOverwrite)
 		srcFilename += m_filenames[i];
 		srcFilename += _T("\n");
 	}
-	u32 srcFilenameSize = srcFilename.length() * sizeof(Char);
-	u32 dstFilenameSize = srcFilenameSize;
+	unsigned long srcFilenameSize = srcFilename.length() * sizeof(Char);
+	unsigned long dstFilenameSize = srcFilenameSize;
 
 	vector<u8> dstFilenameBuffer(dstFilenameSize);
 	ret = compress(&dstFilenameBuffer[0], &dstFilenameSize, (const u8*)srcFilename.c_str(), srcFilenameSize);

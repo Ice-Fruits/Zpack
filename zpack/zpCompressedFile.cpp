@@ -255,7 +255,7 @@ u32 CompressedFile::oneChunkRead(u8* buffer, u32 size)
 	u8* compressed = new u8[m_compressedSize];
 	fread((char*)compressed, m_compressedSize, 1, m_package->m_stream);
 
-	u32 dstSize = m_originSize;	//don't want m_originSize to be changed
+	unsigned long dstSize = m_originSize;	//don't want m_originSize to be changed
 	if (uncompress(dstBuffer, &dstSize, compressed, m_compressedSize) != Z_OK)
 	{
 		size = 0;
@@ -283,8 +283,8 @@ bool CompressedFile::readChunk(u32 chunkIndex, u32 offset, u32 readSize, u8* buf
 	assert(m_chunkPos != NULL);
 	seekInPackage(m_chunkPos[chunkIndex]);
 
-	u32 compressedChunkSize = 0;
-	u32 originChunkSize = 0;
+	unsigned long compressedChunkSize = 0;
+	unsigned long originChunkSize = 0;
 	if (chunkIndex + 1 < m_chunkCount)
 	{
 		compressedChunkSize = m_chunkPos[chunkIndex + 1] - m_chunkPos[chunkIndex];
